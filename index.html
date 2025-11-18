@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BCS Quick Logger – Invisible Theme (Stable Dual Theme)</title>
+  <style>
+    /* ======== THEMES (Reverted + Clean) ======== */
+    :root{ --bg:#050505; --panel:#0a0a0a; --text:#f5f5f5; --muted:#9aa0a6; --border:#1f2937; --accent:#00f0ff; --accent2:#00ffa3; --pillbg:#0b1324; --pillfg:#bfeaf5; }
+    :root[data-theme="light"]{ --bg:#ffffff; --panel:#ffffff; --text:#111827; --muted:#374151; --border:#e5e7eb; --accent:#2563eb; --accent2:#1d4ed8; --pillbg:#e0f2fe; --pillfg:#0b1220; }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;padding:24px;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif}
+
+    .wrap{max-width:1100px;margin:0 auto;display:grid;gap:18px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:18px}
+    .pad{padding:18px}
+
+    h1{margin:0 0 6px;font-weight:800;letter-spacing:.2px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .sub{color:var(--muted);margin-bottom:8px}
+    .topbar{display:flex;justify-content:space-between;align-items:center}
+
+    .grid{display:grid;grid-template-columns:180px 1fr;gap:18px;align-items:start}
+    .stall-box{display:flex;align-items:center;justify-content:center;height:180px;border:2px dashed var(--border);border-radius:16px;font-size:64px;font-weight:800;color:var(--accent2)}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:120px}
+    .field label{font-size:12px;color:var(--muted)}
+    input{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px}
+
+    button{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+    button:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-accent{border-color:var(--accent);}
+    .big{padding:16px 18px;font-size:18px}
+
+    .scores{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .score{background:transparent;border:1px solid var(--border);border-radius:12px;padding:18px 0;text-align:center;font-weight:800;color:var(--text);cursor:pointer}
+    .score:hover,.score.active{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#000}
+
+    table{width:100%;border-collapse:collapse;margin-top:8px;background:var(--panel);border-radius:12px;overflow:hidden}
+    th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
+    th{background:transparent;color:var(--accent2)}
+    tbody tr:nth-child(even){background:transparent}
+
+    .settingsCard{background:var(--panel);border:1px solid var(--border);border-radius:12px;margin-top:6px;padding:12px}
+    .hint{color:var(--muted);font-size:12px}
+    .pill{display:inline-block;border:1px solid var(--border);padding:6px 10px;border-radius:999px;background:var(--pillbg);color:var(--pillfg)}
+    .pulse{box-shadow:0 0 0 0 rgba(0,0,0,0);animation:pulse .6s ease-out}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(37,99,235,.35)}100%{box-shadow:0 0 0 18px rgba(37,99,235,0)}}
+
+    /* Readability hard-guards for light theme */
+    :root[data-theme="light"] .score{background:#f3f4f6}
+    :root[data-theme="light"] .score:hover,:root[data-theme="light"] .score.active{color:#fff}
+    :root[data-theme="light"] input, :root[data-theme="light"] button{background:#ffffff}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card pad">
+      <div class="topbar">
+        <h1>BCS Quick Logger</h1>
+        <button type="button" id="themeToggle" class="btn-accent" title="Toggle theme">Toggle theme</button>
+      </div>
+      <div class="sub">Click a BCS to instantly save. 4×4 (1.00–4.75). Big ±1/±5 stall controls. Auto‑increment optional.</div>
+      <div class="meta-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px">
+        <div class="field"><label>Farm</label><input id="farm" placeholder="Riverview"/></div>
+        <div class="field"><label>Parlor</label><input id="parlor" placeholder="Rotary A"/></div>
+        <div class="field"><label>Reviewer (Initials)</label><input id="reviewer" placeholder="e.g., JP"/></div>
+        <div class="field"><label>Session Tag</label><input id="session" placeholder="AM shift 2025‑11‑04"/></div>
+      </div>
+    </div>
+
+    <div class="card pad">
+      <div class="grid">
+        <div class="stall-box" id="stallPreview">—</div>
+        <div>
+          <div class="row">
+            <div class="field" style="min-width:120px"><label>Stall #</label><input id="stall" type="number" min="1" inputmode="numeric" placeholder="1"/></div>
+            <div class="field" style="min-width:160px"><label>Cow ID (optional)</label><input id="cowId" placeholder="Scan or type"/></div>
+            <div class="field" style="min-width:200px"><label>Notes</label><input id="notes" placeholder="Lame LH, dirty flank, etc."/></div>
+          </div>
+
+          <div class="row" style="margin-top:10px">
+            <button type="button" id="dec5" class="big">−5</button>
+            <button type="button" id="dec" class="big">−1</button>
+            <button type="button" id="inc" class="big">+1</button>
+            <button type="button" id="inc5" class="big">+5</button>
+            <span class="pill" id="status">Ready</span>
+          </div>
+
+          <div class="scores" id="scoreGrid" aria-label="BCS grid" style="margin-top:10px"></div>
+
+          <div class="settingsCard">
+            <div class="row" style="gap:24px">
+              <label><input type="checkbox" id="autoInc" checked> Auto‑increment stall after submit</label>
+              <label><input type="checkbox" id="keepScore" checked> Keep selected BCS after submit</label>
+              <label><input type="checkbox" id="timeSeconds" checked> Include epoch seconds</label>
+            </div>
+            <div class="hint" style="margin-top:6px">Shortcuts: <b>↑/↓/←/→</b> navigate BCS · <b>U</b> undo · <b>C</b> clear. Click any BCS to save instantly.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card pad">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Entries</h2>
+        <div class="row">
+          <button type="button" id="downloadCsv" class="btn-accent">Download CSV</button>
+          <button type="button" id="downloadJson">Download JSON</button>
+          <button type="button" id="undo">Undo last</button>
+          <button type="button" id="clearAll">Clear all</button>
+        </div>
+      </div>
+      <table id="logTable" aria-label="entries table">
+        <thead>
+          <tr>
+            <th>#</th><th>Farm</th><th>Parlor</th><th>Reviewer</th><th>Session</th>
+            <th>Stall</th><th>Cow ID</th><th>BCS</th><th>Notes</th><th>Timestamp</th><th>Epoch</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)">
+        <button type="button" id="runTests">Run self‑tests</button>
+        <span id="testResult"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    'use strict';
+
+    const log = (msg)=>{ const s=document.getElementById('status'); if(s){ s.textContent=msg; s.classList.add('pulse'); setTimeout(()=>s.classList.remove('pulse'),600);} };
+    const entries = JSON.parse(localStorage.getItem('bcs_entries')||'[]');
+    let selectedScore = null;
+    const el = id=>document.getElementById(id);
+
+    const stallInput = el('stall');
+    const cowIdInput = el('cowId');
+    const notesInput = el('notes');
+    const farmInput = el('farm');
+    const parlorInput = el('parlor');
+    const reviewerInput = el('reviewer');
+    const sessionInput = el('session');
+    const preview = el('stallPreview');
+    const grid = el('scoreGrid');
+    const tableBody = document.querySelector('#logTable tbody');
+    const autoInc = el('autoInc');
+    const keepScore = el('keepScore');
+    const timeSeconds = el('timeSeconds');
+
+    function syncPreview(){ if(preview) preview.textContent = stallInput.value || '—'; }
+    function persist(){ localStorage.setItem('bcs_entries', JSON.stringify(entries)); }
+    function updateStatus(){ const s=document.getElementById('status'); if(s) s.textContent = entries.length? `${entries.length} entr${entries.length===1?'y':'ies'}${selectedScore? ' · BCS '+selectedScore:''}` : 'Ready'; }
+
+    function adjustStall(d){ const v=(+stallInput.value||0)+d; stallInput.value=Math.max(1,v); syncPreview(); }
+    el('inc').addEventListener('click', ()=>adjustStall(1));
+    el('dec').addEventListener('click', ()=>adjustStall(-1));
+    el('inc5').addEventListener('click', ()=>adjustStall(5));
+    el('dec5').addEventListener('click', ()=>adjustStall(-5));
+    stallInput.addEventListener('input', syncPreview);
+
+    function renderScores(){ grid.innerHTML=''; const scores=Array.from({length:16},(_,i)=>(1+i*.25).toFixed(2)); scores.forEach(s=>{ const b=document.createElement('button'); b.type='button'; b.className='score'; b.textContent=s; b.dataset.score=s; b.addEventListener('click',()=>{ selectedScore=s; document.querySelectorAll('.score').forEach(e=>e.classList.toggle('active',e.dataset.score===s)); submit(true); }); grid.appendChild(b); }); }
+
+    document.addEventListener('keydown', e=>{ if(['ArrowRight','ArrowDown','ArrowLeft','ArrowUp'].includes(e.key)){ e.preventDefault(); const scores=Array.from({length:16},(_,i)=>(1+i*.25).toFixed(2)); const idx=selectedScore? scores.indexOf(selectedScore):0; let n=idx; if(e.key==='ArrowRight'||e.key==='ArrowDown') n=Math.min(scores.length-1,idx+1); if(e.key==='ArrowLeft'||e.key==='ArrowUp') n=Math.max(0,idx-1); selectedScore=scores[n]; document.querySelectorAll('.score').forEach(e=>e.classList.toggle('active',e.dataset.score===selectedScore)); }
+      if(e.key.toLowerCase()==='u') undo(); if(e.key.toLowerCase()==='c') clearAll(true); });
+
+    function submit(auto=false){ const stall=parseInt(stallInput.value,10); if(!stall) return log('Enter stall #'); if(!selectedScore) return log('Pick BCS'); const now=new Date(); const row={farm:farmInput.value||'',parlor:parlorInput.value||'',reviewer:reviewerInput.value||'',session:sessionInput.value||'',stall,cow_id:(cowIdInput.value||'').trim(),bcs:Number(selectedScore),notes:(notesInput.value||'').trim(),ts_iso:now.toISOString(),ts_epoch:Math.floor(now.getTime()/1000)}; entries.push(row); persist(); render(); log('Saved'); if(auto && autoInc.checked) adjustStall(1); if(!keepScore.checked){ selectedScore=null; document.querySelectorAll('.score').forEach(e=>e.classList.remove('active')); } cowIdInput.value=''; notesInput.value=''; }
+
+    function undo(){ if(entries.length){ entries.pop(); persist(); render(); log('Undid'); } }
+    let arm=false,timer=null; function clearAll(force=false){ if(!force && !arm){ arm=true; const b=el('clearAll'); if(b) b.textContent='Confirm clear'; timer=setTimeout(()=>{arm=false; if(b) b.textContent='Clear all';},2000); return;} if(timer) clearTimeout(timer); arm=false; const b=el('clearAll'); if(b) b.textContent='Clear all'; entries.length=0; persist(); tableBody.innerHTML=''; selectedScore=null; document.querySelectorAll('.score').forEach(e=>e.classList.remove('active')); stallInput.value=''; syncPreview(); updateStatus(); log('Cleared'); }
+
+    el('undo').addEventListener('click', undo);
+    el('clearAll').addEventListener('click', ()=>clearAll(false));
+
+    function render(){ tableBody.innerHTML=''; entries.forEach((r,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${r.farm}</td><td>${r.parlor}</td><td>${r.reviewer}</td><td>${r.session}</td><td>${r.stall}</td><td>${r.cow_id||''}</td><td>${(+r.bcs).toFixed(2)}</td><td>${(r.notes||'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}</td><td>${new Date(r.ts_iso).toLocaleString()}</td><td>${timeSeconds.checked? r.ts_epoch:''}</td>`; tableBody.appendChild(tr); }); updateStatus(); }
+
+    // Downloads
+    el('downloadCsv').addEventListener('click',()=>{ if(!entries.length) return log('No data'); const hdr=['farm','parlor','reviewer','session','stall','cow_id','bcs','notes','timestamp_iso','timestamp_epoch']; const lines=[hdr.join(',')].concat(entries.map(r=>{ const notes=(r.notes||'').replace(/"/g,'""'); return [r.farm,r.parlor,r.reviewer,r.session,r.stall,r.cow_id,(+r.bcs).toFixed(2),`"${notes}"`,r.ts_iso,r.ts_epoch].join(','); })); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'})); a.download=`bcs_log_${new Date().toISOString().replace(/[-:]/g,'').slice(0,15)}.csv`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),400); log('CSV downloaded'); });
+    el('downloadJson').addEventListener('click',()=>{ if(!entries.length) return log('No data'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(entries,null,2)],{type:'application/json'})); a.download='bcs_log.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),400); log('JSON downloaded'); });
+
+    // Theme toggle
+    function applyTheme(t){ document.documentElement.setAttribute('data-theme',t); localStorage.setItem('bcs_theme',t); }
+    function toggleTheme(){ const cur=localStorage.getItem('bcs_theme')||'dark'; applyTheme(cur==='dark'?'light':'dark'); }
+
+    function init(){ applyTheme(localStorage.getItem('bcs_theme')||'dark'); document.getElementById('themeToggle').addEventListener('click',toggleTheme); renderScores(); render(); stallInput.value=''; syncPreview(); log('Ready'); }
+    if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',init,{once:true}); } else { init(); }
+
+    // Self tests
+    document.getElementById('runTests').addEventListener('click',()=>{ const out=document.getElementById('testResult'); const orig=JSON.parse(localStorage.getItem('bcs_entries')||'[]'); try{ const btns=grid.querySelectorAll('.score'); console.assert(btns.length===16,'Expected 16 BCS buttons'); const start=entries.length; stallInput.value=3; syncPreview(); btns[0].click(); console.assert(entries.length===start+1,'Add via BCS'); undo(); console.assert(entries.length===start,'Undo works'); entries.push({farm:'T',parlor:'P',reviewer:'R',session:'S',stall:1,cow_id:'X',bcs:1.25,notes:'t',ts_iso:new Date().toISOString(),ts_epoch:0}); persist(); render(); clearAll(true); console.assert(entries.length===0,'Clear all empties'); const stored=JSON.parse(localStorage.getItem('bcs_entries')||'[]'); console.assert(Array.isArray(stored)&&stored.length===0,'Storage []'); out.textContent='Tests passed'; out.style.color='var(--accent2)'; }catch(e){ console.error(e); out.textContent='Tests failed: '+e.message; out.style.color='#ef4444'; } finally { localStorage.setItem('bcs_entries',JSON.stringify(orig)); const restored=JSON.parse(localStorage.getItem('bcs_entries')||'[]'); entries.length=0; entries.push(...restored); render(); } });
+  })();
+  </script>
+</body>
+</html>
