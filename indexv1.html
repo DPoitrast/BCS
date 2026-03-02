@@ -30,8 +30,7 @@
     input{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px}
 
     button{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
-    button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
-    button:disabled{opacity: 0.5; cursor: not-allowed;}
+    button:hover{border-color:var(--accent);color:var(--accent)}
     .btn-accent{border-color:var(--accent);}
     .big{padding:16px 18px;font-size:18px}
 
@@ -61,7 +60,7 @@
     <div class="card pad">
       <div class="topbar">
         <h1>BCS Quick Logger</h1>
-        <button type="button" id="themeToggle" title="Toggle theme">Toggle theme</button>
+        <button type="button" id="themeToggle" class="btn-accent" title="Toggle theme">Toggle theme</button>
       </div>
       <div class="sub">Click a BCS to instantly save. 4×4 (1.00–4.75). Big ±1/±3 stall controls. Auto-increment optional.</div>
       <div class="meta-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px">
@@ -108,9 +107,7 @@
       <div class="row" style="justify-content:space-between;align-items:center">
         <h2 style="margin:0">Entries</h2>
         <div class="row">
-          <button type="button" id="uploadCloud" class="btn-accent">Upload to Cloud</button>
-          
-          <button type="button" id="downloadCsv">Download CSV</button>
+          <button type="button" id="downloadCsv" class="btn-accent">Download CSV</button>
           <button type="button" id="downloadJson">Download JSON</button>
           <button type="button" id="undo">Undo last</button>
           <button type="button" id="clearAll">Clear all</button>
@@ -275,12 +272,13 @@
     el('undo').addEventListener('click', undo);
     el('clearAll').addEventListener('click', ()=>clearAll(false));
 
+    // NEW: newest record on top
     function render(){ 
       tableBody.innerHTML=''; 
       const reversed = entries.slice().reverse();
       reversed.forEach((r,idx)=>{ 
         const tr=document.createElement('tr'); 
-        const displayIndex = entries.length - idx;
+        const displayIndex = entries.length - idx; // keep sequence numbers increasing with time
         tr.innerHTML=
           `<td>${displayIndex}</td>
            <td>${r.farm}</td>
@@ -297,42 +295,6 @@
       }); 
       updateStatus(); 
     }
-
-    // --- UPLOAD TO CLOUD LOGIC ---
-    el('uploadCloud').addEventListener('click', async () => {
-      if(!entries.length) return log('No data to upload');
-
-      // The Web App URL you provided
-      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyuzZgaexbndzCgtliFD_BLjMOxvjRflbURfVp-DZTihb8Htkcp0mKqAvgIvD4GS5jmsg/exec";
-      
-      const btn = el('uploadCloud');
-      const originalText = btn.textContent;
-      btn.textContent = 'Uploading...';
-      btn.disabled = true;
-
-      try {
-        const response = await fetch(WEB_APP_URL, {
-          method: 'POST',
-          // Sent as plain text to avoid CORS preflight (OPTIONS) requests which Apps Script blocks
-          body: JSON.stringify(entries)
-        });
-
-        const result = await response.json();
-        
-        if(result.status === 'success') {
-          log('Cloud upload successful!');
-          // Optional: clearAll(true); 
-        } else {
-          log('Upload failed: ' + result.message);
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        log('Upload failed. Check console.');
-      } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
-      }
-    });
 
     // Downloads
     el('downloadCsv').addEventListener('click',()=>{ 
