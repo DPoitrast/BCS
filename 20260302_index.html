@@ -165,15 +165,8 @@
     }
 
     function adjustStall(d){ 
-      // Parse the current value, defaulting to 1 (not 0) if empty
-      let currentVal = +stallInput.value || 1;
-      let newVal = currentVal + d;
-      
-      // Handle the modulo math for the 1-106 loop
-      // Add 106 before modulo to handle negative wrap-arounds correctly in JS
-      let loopedVal = ((newVal - 1 + 106) % 106) + 1;
-      
-      stallInput.value = loopedVal; 
+      const v=(+stallInput.value||0)+d; 
+      stallInput.value=Math.max(1,v); 
       syncPreview(); 
     }
 
